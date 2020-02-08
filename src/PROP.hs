@@ -8,16 +8,18 @@ module PROP
     (\/),
     cShow,
     pShow,
-    ClauseStatus,
-    CnfStatus,
+    ClauseStatus (..),
+    CnfStatus (..),
     Pval,
-    Cnf) where
+    Cnf (..)) where
 
 type Var = Int
+
 data Lit = Lit {
   var :: Var, 
   value :: Bool } 
   deriving (Eq)
+
 type Clause = [Lit]
 type Prop = [Clause]
 
@@ -56,11 +58,13 @@ data ClauseStatus =
 data CnfStatus =
     Sat
   | Conflict
-  | Unit_clause Lit
+  | UnitClause Lit
   | Other   
+  deriving (Eq,Show)
 
 data Cnf = Cnf {
   clauses :: [Clause],
   nvars :: Int} 
+  deriving (Eq,Show)
 
 type Pval = [Maybe Bool] 
