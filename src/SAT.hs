@@ -139,60 +139,63 @@ partialEvalCnf pval1 cnf1  =
 -- Backtracking mechanism for partial valuations                              
 -- ****************************************************************************
 
-backtrack (diff: int list) (pval1: ((bool) option) array) : unit =
-   case diff of
+-- backtrack (diff: int list) pval : unit =
+--    case diff of
+--     [] -> ()
+--     x : xs ->  (Array.set pval1 x Nothing); backtrack xs pval1 
+
+backtrack :: [Int] -> Pval -> () 
+backtrack diff pval =
+   case pval of
     [] -> ()
-    x : xs ->  (Array.set pval1 x Nothing); backtrack xs pval1 
-  
+    p : ps -> 
+      let rest = backtrack xs pval1 in 
+        if (p `elem` diff) then Nothing : rest
+        else p : rest 
+
 
 exception Sat_found
 
 -- Finds a lit in c that is assigned to Nothing in pval  
-find_unassigned_clause (pval1: ((bool) option) array) (c: lit list) :
-  lit option =
-   case c of
+findUnassignedClause :: Pval -> [Lit] -> Maybe Lit 
+findUnassignedClause pval c = 
+  case c of
     [] -> Nothing
     x : xs ->
-    if eqOpt (Array.get pval1 x.var) Nothing then  Just x 
-    else
-      find_unassigned_clause pval1 xs 
+      if eqOpt (pval1 !! x.var) Nothing then Just x 
+      else findUnassignedClause pval1 xs 
     
 
 -- Finds a lit in cnf that is assigned to Nothing in pval  
-let find_unassigned (pval1: ((bool) option) array) (cnf1: cnf) : lit option =
-  let i = ref 0 in
-  let newlit = ref Nothing in  
-    while (!i < (Array.length (cnf1.clauses))) && (eqOptOpt (!newlit) Nothing) do      
-         case find_unassigned_clause pval1 (Array.get (cnf1.clauses) !i) of
-        | Nothing -> ()
-        | Just x -> newlit := (Just x)
-         let new_i = (!i) + 1 in i := new_i       
-    !newlit
+findUnassigned' :: Pval -> Cnf -> Int -> Maybe a -> Maybe Lit 
+findUnassigned' pval cnf1 i newlit =
+  if (i >= (Array.length (cnf1.clauses)) || eqOptOpt newlit Nothing) then newlit
+  else   
+    case findUnassignedClause pval1 (cnf1.clauses !! i) of
+      Nothing -> Nothing  
+      Just x -> newlit := findUnassigned' pval cnf1 i+1 (Just x)
   
-
+findUnassigned :: Pval -> Cnf -> Maybe Lit
+findUnassigned pval cnf1  = findUnassigned' pval cnf1 0 Nothing 
 
 -- ****************************************************************************
 -- Unit clause propagation                                                    
 -- ****************************************************************************
-
-
-pre_setAndPropagate (l: lit) (pval: ((bool) option) array) (cnf: cnf)
-               (listvar: int list) : (bool) * (int list) =
-    Array.set pval l.var (Just (l.value));
-     case partialEvalCnf pval cnf of
-    | Sat -> raise Sat_found
-    | Conflict -> (True, listvar)
-    | Unit_clause n -> pre_setAndPropagate n pval cnf ((n.var) :: listvar)
-    | Other ->
-       case find_unassigned pval cnf of
-      | Nothing -> raise Sat_found
-      | Just x -> pre_setAndPropagate x pval cnf listvar
-      
+preSetAndPropagate :: Lit -> Pval -> Cnf -> [Int] -> (Bool,[Int]) 
+preSetAndPropagate l pval cnf listvar =
+  Array.set pval l.var (Just (l.value))
+    case partialEvalCnf pval cnf of
+      Sat -> raise Sat_found
+      Conflict -> (True, listvar)
+      Unit_clause n -> preSetAndPropagate n pval cnf ((n.var) :: listvar)
+      Other ->
+        case find_unassigned pval cnf of
+          Nothing -> raise Sat_found
+          Just x -> preSetAndPropagate x pval cnf listvar
     
-  
-
-let setAndPropagate (l: lit) (pval: ((bool) option) array) (cnf: cnf) : 
-  (bool) * (int list) = pre_setAndPropagate l pval cnf []
+    
+setAndPropagate :: Lit -> Pval -> Cnf -> (Bool,[Int])
+setAndPropagate l pval cnf  = preSetAndPropagate l pval cnf []
 
 -- ****************************************************************************
 -- Improvements to your SAT solver (choose at least one of the following list)
@@ -204,14 +207,13 @@ let setAndPropagate (l: lit) (pval: ((bool) option) array) (cnf: cnf) :
 -- - Adjacency data structures                                                
 -- ****************************************************************************
 
-is_in_pos (l: lit) (c: lit list) : bool =
-   case c of
+isInPos :: Lit -> [Lit] -> Bool
+isInPos l c =
+  case c of
     [] -> True
     x : xs ->
-    if ((x.var) == (l.var)) && (not (x.value)) then  False 
-    else    
-      is_in_pos l xs 
-    
+      if ((x.var) == (l.var)) && (not (x.value)) then False 
+      else isInPos l xs 
 
 -- ****************************************************************************
 -- Main algorithm for transforming a formula                                  
@@ -220,7 +222,6 @@ is_in_pos (l: lit) (c: lit list) : bool =
 -- dpll                                                                       
 -- sat                                                                        
 -- ****************************************************************************
-
 
 let pval_to_val (pval: ((bool) option) array) : ((bool) array) option =
   let values = Array.make (Array.length pval) False in
@@ -247,16 +248,16 @@ let cnf_status (pval: ((bool) option) array) (cnf: cnf) : (bool) * (((bool) arra
   
 
 dpll (cnf_nvars : int) (pval: ((bool) option) array) (cnf: cnf) : ((bool) array) option = 
-    Array.set pval (cnf_nvars - 1) (Just True);                      -- Set a certain var in pval to Just True 
+    Array.set pval (cnf_nvars - 1) (Just True);  -- Set a certain var in pval to Just True 
      case (cnf_status pval cnf) of
-    | (True, Just x) ->  Just x            -- cnf is Sat and we return stripped-pval 
-    | (False, Just x) -> dpll (cnf_nvars - 1) pval cnf                                   -- cnf is unresolved and we keep going 
+    | (True, Just x) ->  Just x    -- cnf is Sat and we return stripped-pval 
+    | (False, Just x) -> dpll (cnf_nvars - 1) pval cnf  -- cnf is unresolved and we keep going 
     | (False, Nothing) ->     -- cnf can't be Sat of current configuration 
-         pval.(cnf_nvars - 1) <- (Just False);                        -- Set a certain var in pval to Just True 
+         pval.(cnf_nvars - 1) <- (Just False);  -- Set a certain var in pval to Just True 
          case cnf_status pval cnf of
-        | (True, Just x) ->  Just x         -- cnf is Sat and we return stripped-pval 
-        | (False, Just x) -> dpll (cnf_nvars - 1) pval cnf                                 -- cnf is unresolved and we keep going 
-        | (False, Nothing) -> Nothing            -- cnf can't be Sat of current configuration 
+        | (True, Just x) ->  Just x    -- cnf is Sat and we return stripped-pval 
+        | (False, Just x) -> dpll (cnf_nvars - 1) pval cnf    -- cnf is unresolved and we keep going 
+        | (False, Nothing) -> Nothing   -- cnf can't be Sat of current configuration 
         | _ -> assert False -- absurd 
     | _ ->  assert False -- absurd 
     
