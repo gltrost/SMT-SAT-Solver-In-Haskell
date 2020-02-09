@@ -101,6 +101,45 @@ main = hspec $ do
     it "isSat test 5" $ 
       isSat [Nothing,Nothing,Just True] Cnf{clauses=[[p,q,r]],nvars=3}  `shouldBe` False
 
+-- Basic examples for isConflict
+    it "isConflict test 0" $ 
+      isConflict [] Cnf{clauses=[],nvars=0}  `shouldBe` False  -- should this be true??? 
+
+    it "isConflict test 1" $ 
+      isConflict [Just False] Cnf{clauses=[[p]],nvars=1} `shouldBe` True 
+
+    it "isConflict test 2" $ 
+      isConflict [Just False, Just True, Just True] Cnf{clauses=[[p,q],[r]],nvars=3}  `shouldBe` True     
+
+    it "isConflict test 3" $ 
+      isConflict [Just True, Just True, Nothing] Cnf{clauses=[[p],[r]],nvars=2}  `shouldBe` False     
+
+    it "isConflict test 4" $ 
+      isConflict [Nothing, Just True, Just True] Cnf{clauses=[[p,r],[q]],nvars=3}  `shouldBe` False 
+
+    it "isConflict test 5" $ 
+      isConflict [Nothing,Nothing,Just True] Cnf{clauses=[[p,q,r]],nvars=3}  `shouldBe` False      
+
+-- Basic examples for isUnit
+    it "isUnit test 0" $ 
+      isUnit [] Cnf{clauses=[],nvars=0}  `shouldBe` Nothing -- should this be true??? 
+
+    it "isUnit test 1" $ 
+      isUnit [Just False] Cnf{clauses=[[p]],nvars=1} `shouldBe` Nothing
+
+    it "isUnit test 2" $ 
+      isUnit [Just False, Just True, Just True] Cnf{clauses=[[p,q],[r]],nvars=3}  `shouldBe` Nothing  
+
+    it "isUnit test 3" $ 
+      isUnit [Just True, Just True, Nothing] Cnf{clauses=[[p],[r]],nvars=2}  `shouldBe` Just r
+
+    it "isUnit test 4" $ 
+      isUnit [Nothing, Just True, Just True] Cnf{clauses=[[p,r],[q]],nvars=3}  `shouldBe` Just p
+
+    it "isUnit test 5" $ 
+      isUnit [Nothing,Nothing,Just True] Cnf{clauses=[[p,q,r]],nvars=3}  `shouldBe` Nothing  
+
+
 -- Literals 
 p = Lit {var = 1, value = True}
 q = Lit {var = 2, value = True}

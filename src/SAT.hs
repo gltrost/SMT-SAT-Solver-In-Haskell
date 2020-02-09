@@ -73,32 +73,31 @@ isSat' pval Cnf {clauses = cls, nvars = nvs} idx result =
 -- isSat :: Pval -> Cnf -> Bool
 isSat pval cnf = isSat' pval cnf 0 True
 
---checks all clauses in cnf of partialEvalClause 
-  -- to see if the cnf is Conflict   
+--checks all clauses in a given cnf to see if there is a Conflict   
 isConflict' :: Pval -> Cnf -> Bool -> Int -> Bool
-isConflict' pval cnf resultant index =  error "Not yet implemented"
-  -- if (index >= length cnf.clauses) then resultant 
-  -- else 
-  --   case partialEvalClause pval ((cnf.clauses) !! index) of
-  --     Conflicting ->  isConflict' pval cnf True (index + 1)   
-  --     _ -> isConflict' pval cnf resultant (index + 1)   
+isConflict' pval Cnf {clauses = cls, nvars = nvs} result idx = 
+  if (idx >= length cls) then result 
+  else 
+    case partialEvalClause pval (cls !! idx) of
+      Conflicting ->  True 
+      _ -> isConflict' pval Cnf {clauses = cls, nvars = nvs} result (idx + 1)   
  
 isConflict :: Pval -> Cnf -> Bool 
 isConflict pval cnf = isConflict' pval cnf False 0
 
 --checks all clauses in cnf of partialEvalClause 
---  to see if the cnf is UnitClause   
+--  to see if the cnf is UnitClause (i.e. contains a clause that is "Unit x") 
 isUnit' :: Pval -> Cnf -> Maybe Lit -> Int -> Maybe Lit 
-isUnit' pval cnf resultant index = error "Not yet implemented"
-  -- if (index >= length cnf.clauses) then resultant   
-  -- else  
-  --   case partialEvalClause pval ((cnf.clauses) !! index) of
-  --     Unit x -> isUnit' pval cnf (Just x) (index + 1)
-  --     _ -> isUnit' pval cnf  resultant (index + 1)
+isUnit' pval Cnf {clauses = cls, nvars = nvs} result idx = 
+  if (idx >= length cls) then result   
+  else  
+    case partialEvalClause pval (cls !! idx) of
+      Unit x -> isUnit' pval Cnf {clauses = cls, nvars = nvs} (Just x) (idx + 1)
+      _ -> isUnit' pval Cnf {clauses = cls, nvars = nvs} result (idx + 1)
 
-isUnit :: Pval -> Cnf -> Maybe Lit -> Int -> Maybe Lit 
-isUnit pval cnf =  error "Not yet implemented"
-	-- isUnit' pval cnf Nothing 0 
+isUnit :: Pval -> Cnf -> Maybe Lit 
+isUnit pval cnf =  
+  isUnit' pval cnf Nothing 0 
   
 
 -- uses isSat, isConflicting and is_Unit
