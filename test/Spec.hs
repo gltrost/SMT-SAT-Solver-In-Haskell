@@ -82,15 +82,33 @@ main = hspec $ do
     it "partialEvalClause test 5" $ 
       partialEvalClause [Nothing,Nothing,Just True] [p,q,r] `shouldBe` Unresolved
 
+-- Basic examples for isSat
+    it "isSat test 0" $ 
+      isSat [] Cnf{clauses=[],nvars=0}  `shouldBe` True  -- should this be true??? 
 
+    it "isSat test 1" $ 
+      isSat [Just True,Just True,Just False] Cnf{clauses=[[p]],nvars=3} `shouldBe` True 
+
+    it "isSat test 2" $ 
+      isSat [Just False, Just True, Just False] Cnf{clauses=[[p,q],[r]],nvars=3}  `shouldBe` True     
+
+    it "isSat test 3" $ 
+      isSat [Just True, Just False, Just True] Cnf{clauses=[[p,r],[q,r]],nvars=3}  `shouldBe` False     
+
+    it "isSat test 4" $ 
+      isSat [Just True, Just True, Just False] Cnf{clauses=[[p,r],[q],[]],nvars=3}  `shouldBe` False 
+
+    it "isSat test 5" $ 
+      isSat [Nothing,Nothing,Just True] Cnf{clauses=[[p,q,r]],nvars=3}  `shouldBe` False
 
 -- Literals 
 p = Lit {var = 1, value = True}
 q = Lit {var = 2, value = True}
 r = Lit {var = 3, value = False}
 
--- Basic examples that should return Some True
-t1 = [[p]]
-t2 = [[p,p]]
-t3 = [[p],[p]]
+-- Basic clauses 
+cnf1 = [[p]]
+cnf2 = [[p,p]]
+cnf3 = [[p],[p]]
+
 

@@ -56,18 +56,19 @@ partialEvalClause pval clause =
 
 -- Functionality: checks all clauses in cnf of partialEvalClause 
 -- to see if the cnf is Sat 
--- High-level: we iterate through the disjuncts that are in cnf.clauses 
---             we then case on each disjunct to see if it's satisfied using partialEvalClauses 
---               if any of the disjuncts isn't satisfied, we return False
---               if all the disjuncts are satisfied, we return True  
+-- High-level: 
+--   we iterate through the disjuncts that are in cnf.clauses 
+--   we apply partialEvalClauses to each disjunct to see if it's Satisfied  
+--   if any of the disjuncts isn't Satisfied, we return False
+--   if all the disjuncts are Satisfied, we return True  
 
 isSat' :: Pval -> Cnf -> Int -> Bool -> Bool
-isSat' pval cnf index resultant =  error "Not yet implemented"
---   if (index >= cnf.clauses) then resultant 
---   else 
---     case (partialEvalClause pval ((cnf.clauses) !! index)) of
---       Satisfied -> isSat' pval cnf (index+1) resultant 
---       _ -> isSat' pval cnf (index+1) False
+isSat' pval Cnf {clauses = cls, nvars = nvs} idx result =  
+  if (idx >= length cls) then result 
+  else 
+    case (partialEvalClause pval (cls !! idx)) of
+      Satisfied -> isSat' pval Cnf {clauses = cls, nvars = nvs} (idx+1) result 
+      _ ->  False
 
 -- isSat :: Pval -> Cnf -> Bool
 isSat pval cnf = isSat' pval cnf 0 True
