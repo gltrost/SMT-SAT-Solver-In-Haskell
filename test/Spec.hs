@@ -1,25 +1,88 @@
 module Main (main) where
 
 import Test.Hspec 
-import Control.Exception (evaluate)
+-- import Control.Exception (evaluate)
 import PROP
 import SAT
 
 main :: IO ()
 main = hspec $ do
   describe "Provability of expressions:" $ do
--- Basic examples that should return True
-    it ("isClauseSat test 1") $ do
+-- Basic examples for isClauseSat
+
+    it "isClauseSat test 0" $ 
+      isClauseSat [] [] `shouldBe` False -- left up to interpretation
+
+    it "isClauseSat test 1" $ 
       isClauseSat [Just True] [p] `shouldBe` True
 
-    it ("isClauseSat test 3") $ do
+    it "isClauseSat test 2" $ 
       isClauseSat [Just False,Just True] [p,q] `shouldBe` True      
 
-    it ("isClauseSat test 4") $ do
+    it "isClauseSat test 3" $ 
       isClauseSat [Just False,Just False,Just True] [p,q,r] `shouldBe` False 
 
-    it ("isClauseSat test 5") $ do
+    it "isClauseSat test 4" $ 
       isClauseSat [Just False,Nothing,Nothing] [p,q,r] `shouldBe` False 
+
+-- Basic examples for isClauseConflict
+    it "isClauseConflict test 1" $ 
+      isClauseConflict [] [] `shouldBe` True
+
+    it "isClauseConflict test 1" $ 
+      isClauseConflict [Just False] [p] `shouldBe` True
+
+    it "isClauseConflict test 2" $ 
+      isClauseConflict [Just False,Just False] [p,q] `shouldBe` True      
+
+    it "isClauseConflict test 3" $ 
+      isClauseConflict [Just False,Just False, Just True] [p,q,r] `shouldBe` True      
+
+    it "isClauseConflict test 4" $ 
+      isClauseConflict [Nothing] [p] `shouldBe` False 
+
+    it "isClauseConflict test 5" $ 
+      isClauseConflict [Just True,Nothing,Nothing] [p,q,r] `shouldBe` False 
+
+-- Basic examples for isClauseUnitUnr
+    it "isClauseUnitUnr test 0" $ 
+      isClauseUnitUnr [] [] `shouldBe` []
+
+    it "isClauseUnitUnr test 1" $ 
+      isClauseUnitUnr [Just False] [p] `shouldBe` []
+
+    it "isClauseUnitUnr test 2" $ 
+      isClauseUnitUnr [Nothing,Just False] [p,q] `shouldBe` [p]     
+
+    it "isClauseUnitUnr test 3" $ 
+      isClauseUnitUnr [Just False,Nothing] [p,q] `shouldBe` [q]     
+
+    it "isClauseUnitUnr test 4" $ 
+      isClauseUnitUnr [Nothing] [p] `shouldBe` [p] 
+
+    it "isClauseUnitUnr test 5" $ 
+      isClauseUnitUnr [Nothing,Nothing,Just False] [p,q,r] `shouldBe` [p,q] 
+
+-- Basic examples for partialEvalClause
+    it "partialEvalClause test 0" $ 
+      partialEvalClause [] [] `shouldBe` Conflicting -- should this be true??? 
+
+    it "partialEvalClause test 1" $ 
+      partialEvalClause [Just True,Just True,Just False] [p,q,r] `shouldBe` Satisfied
+
+    it "partialEvalClause test 2" $ 
+      partialEvalClause [Just False, Just False, Just True] [p,q,r] `shouldBe` Conflicting    
+
+    it "partialEvalClause test 3" $ 
+      partialEvalClause [Just False, Just False, Nothing] [p,q,r] `shouldBe` Unit r    
+
+    it "partialEvalClause test 4" $ 
+      partialEvalClause [Just False, Nothing, Just True] [p,q,r] `shouldBe` Unit q 
+
+    it "partialEvalClause test 5" $ 
+      partialEvalClause [Nothing,Nothing,Just True] [p,q,r] `shouldBe` Unresolved
+
+
 
 -- Literals 
 p = Lit {var = 1, value = True}
