@@ -139,6 +139,71 @@ main = hspec $ do
     it "isUnit test 5" $ 
       isUnit [Nothing,Nothing,Just True] Cnf{clauses=[[p,q,r]],nvars=3}  `shouldBe` Nothing  
 
+-- Basic examples for partialEvalCnf
+    it "partialEvalCnf test 0" $ 
+      partialEvalCnf [] Cnf{clauses=[],nvars=0}  `shouldBe` Sat -- should this be true??? 
+
+    it "partialEvalCnf test 1" $ 
+      partialEvalCnf [Just False] Cnf{clauses=[[p]],nvars=1} `shouldBe` Conflict
+
+    it "partialEvalCnf test 2" $ 
+      partialEvalCnf [Just False, Just True, Just True] Cnf{clauses=[[p,q],[r]],nvars=3}  `shouldBe` Conflict  
+
+    it "partialEvalCnf test 3" $ 
+      partialEvalCnf [Just True, Just True, Nothing] Cnf{clauses=[[p],[r]],nvars=2}  `shouldBe` UnitClause r
+
+    it "partialEvalCnf test 4" $ 
+      partialEvalCnf [Nothing, Just True, Just True] Cnf{clauses=[[p,r],[q]],nvars=3}  `shouldBe` UnitClause p
+
+    it "partialEvalCnf test 5" $ 
+      partialEvalCnf [Nothing,Nothing,Just True] Cnf{clauses=[[p,q,r]],nvars=3}  `shouldBe`  Other 
+
+    it "partialEvalCnf test 6" $ 
+      partialEvalCnf [Just True, Just False, Just False] Cnf{clauses=[[p,q],[r]],nvars=3} `shouldBe` Sat
+
+
+-- Basic examples for findUnassignedClause
+    it "findUnassignedClause test 0" $ 
+      findUnassignedClause [] []  `shouldBe` Nothing -- should this be true??? 
+
+    it "findUnassignedClause test 1" $ 
+      findUnassignedClause [Just False] [p] `shouldBe` Nothing 
+
+    it "findUnassignedClause test 2" $ 
+      findUnassignedClause [Just False, Just True, Just True] [p,q]  `shouldBe` Nothing
+
+    it "findUnassignedClause test 3" $ 
+      findUnassignedClause [Just True, Just True, Nothing] [p,q,r]  `shouldBe` Just r
+
+    it "findUnassignedClause test 4" $ 
+      findUnassignedClause [Nothing, Just True, Just True] [p,r]  `shouldBe` Just p 
+
+    it "findUnassignedClause test 5" $ 
+      findUnassignedClause [Nothing,Nothing,Just True] [p,q,r]  `shouldBe` Just p
+
+
+
+-- Basic examples for findUnassigned
+    it "findUnassigned test 0" $ 
+      findUnassigned [] Cnf{clauses=[],nvars=0}  `shouldBe` Nothing -- should this be true??? 
+
+    it "findUnassigned test 1" $ 
+      findUnassigned [Just False] Cnf{clauses=[[p]],nvars=1} `shouldBe` Nothing 
+
+    it "findUnassigned test 2" $ 
+      findUnassigned [Just False, Just True, Just True] Cnf{clauses=[[p,q],[r]],nvars=3}  `shouldBe` Nothing
+
+    it "findUnassigned test 3" $ 
+      findUnassigned [Just True, Just True, Nothing] Cnf{clauses=[[p],[r]],nvars=2}  `shouldBe` Just r
+
+    it "findUnassigned test 4" $ 
+      findUnassigned [Nothing, Just True, Just True] Cnf{clauses=[[p,r],[q]],nvars=3}  `shouldBe` Just p 
+
+    it "findUnassigned test 5" $ 
+      findUnassigned [Nothing,Nothing,Just True] Cnf{clauses=[[p,q,r]],nvars=3}  `shouldBe` Just p
+
+
+
 
 -- Literals 
 p = Lit {var = 1, value = True}

@@ -101,52 +101,54 @@ isUnit pval cnf =
   
 
 -- uses isSat, isConflicting and is_Unit
---   to see if cnf is either Sat, Conflicting, UnitClause or Other..   
+--   to see if cnf is either Sat, Conflicting, UnitClause x or Unresolved   
 partialEvalCnf :: Pval -> Cnf -> CnfStatus 
-partialEvalCnf pval cnf  = error "Not yet implemented"
-  -- if isSat pval cnf then Sat 
-  -- else
-  --   if isConflict pval cnf then  Conflict 
-  --   else
-  --     case isUnit pval cnf of
-  --       Nothing -> Other
-  --       Just x ->  UnitClause x
+partialEvalCnf pval cnf  = 
+  if isSat pval cnf then Sat 
+  else
+    if isConflict pval cnf then  Conflict 
+    else
+      case isUnit pval cnf of
+        Nothing -> Other
+        Just x ->  UnitClause x
        
      
 -- ****************************************************************************
 -- Backtracking mechanism for partial valuations                              
 -- ****************************************************************************
 
---           [Int] ->  [Maybe Bool] -> [Maybe Bool]
+
+-- "diff" keeps track of all the tracks 
+--              [Int] ->  [Maybe Bool] -> [Maybe Bool]
 -- backtrack :: [Int] ->  Pval         -> Pval 
-backtrack diff pval = error "Not yet implemented"
---    case pval of
---     [] -> []
---     x : xs -> 
---       let rest = backtrack diff xs in 
---         if (x `elem` diff) then Nothing : rest
---         else x : rest 
+backtrack diff pval = 
+  case pval of
+    [] -> []
+    x : xs -> 
+      let rest = backtrack diff xs in 
+        if (x `elem` diff) then Nothing : rest
+        else x : rest 
 
 
-
--- Finds a lit in c that is assigned to Nothing in pval  
+--- NOTE !!! THIS HAD AN OUT OF BOUNDS ISSUE!! SEE ORIGINAL
+-- Finds a Lit in clause that is assigned to Nothing in pval  
 findUnassignedClause :: Pval -> [Lit] -> Maybe Lit 
-findUnassignedClause pval c =  error "Not yet implemented"
-  -- case c of
-  --   [] -> Nothing
-  --   x : xs ->
-  --     if  (pval !! (x.var)) == Nothing then Just x 
-  --     else findUnassignedClause pval xs 
+findUnassignedClause pval clause =
+  case clause of
+    [] -> Nothing
+    (Lit var val) : xs ->
+      if  (pval !! (var-1)) == Nothing then Just (Lit var val)
+      else findUnassignedClause pval xs 
     
 
 -- Finds a lit in cnf that is assigned to Nothing in pval  
-findUnassigned' :: Pval -> Cnf -> Int -> Maybe a -> Maybe Lit 
-findUnassigned' pval cnf i newlit = error "Not yet implemented"
-  -- if (i >= (length (cnf.clauses)) || newlit == Nothing) then newlit
-  -- else   
-  --   case findUnassignedClause pval ((cnf.clauses) !! i) of
-  --     Nothing -> Nothing  
-  --     Just x ->  findUnassigned' pval cnf i+1 (Just x)
+findUnassigned' :: Pval -> Cnf -> Int -> Maybe Lit -> Maybe Lit 
+findUnassigned' pval (Cnf clauses nvars) i newlit = 
+  if (i >= (length clauses)) then newlit
+  else   
+    case findUnassignedClause pval (clauses !! i) of
+      Nothing -> findUnassigned' pval (Cnf clauses nvars) (i+1) newlit
+      Just x -> (Just x)
   
 findUnassigned :: Pval -> Cnf -> Maybe Lit
 findUnassigned pval cnf  = findUnassigned' pval cnf 0 Nothing 
@@ -159,22 +161,24 @@ listSet (z:zs) x y  =
   if z == x then y : zs 
   else listSet zs x y
 
+
+-- sees if a pval-cnf is Conflict (returns "True"), and finds all unit clauses,
 preSetAndPropagate :: Lit -> Pval -> Cnf -> [Int] -> (Bool,[Int]) 
-preSetAndPropagate l pval cnf listvar =  error "Not yet implemented"
-  -- case partialEvalCnf pval cnf of
-  --   Sat -> error "Sat_found"
-  --   Conflict -> (True, listvar)
-  --   UnitClause n -> preSetAndPropagate n pval cnf ((n.var) : listvar)
-  --   Other ->
-  --     case findUnassigned pval cnf of
-  --       Nothing -> error "Sat_found"
-  --       Just x -> preSetAndPropagate x pval cnf listvar
+preSetAndPropagate l pval cnf listvar = 
+  case partialEvalCnf pval cnf of
+    Sat -> error "Sat_found"
+    Conflict -> (True, listvar)
+    UnitClause (Lit var val) -> preSetAndPropagate (Lit var val) pval cnf (var : listvar)
+    Other ->
+      case findUnassigned pval cnf of
+        Nothing -> error "Sat_found"
+        Just x -> preSetAndPropagate x pval cnf listvar
     
 --          (Int,Bool) -> [Maybe Bool] -> [([(Int,Bool)],Int)] -> (Bool,[Int])    
 setAndPropagate :: Lit -> Pval         -> Cnf                  -> (Bool,[Int])
-setAndPropagate l pval cnf  =  error "Not yet implemented"
-  -- let g = listSet pval (pval !! (l.var)) (Just (l.value)) in
-  -- preSetAndPropagate l g cnf []
+setAndPropagate (Lit var val) pval cnf  = 
+  let g = listSet pval (pval !! (var)) (Just (val)) in
+  preSetAndPropagate (Lit var val) g cnf []
 
 
 -- ****************************************************************************
